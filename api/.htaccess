@@ -1,0 +1,11 @@
+Options -MultiViews
+RewriteEngine On
+RewriteBase /Agile/api/
+
+# Route all non-file, non-directory requests to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+
+# Let PHP handle CORS headers properly
+# Do not set CORS headers here to avoid conflicts

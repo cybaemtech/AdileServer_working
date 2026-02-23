@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script>
+        // Set proper content type and CORS headers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Return JSON response for API calls
+            const response = {
+                "message": "Not authenticated"
+            };
+            
+            // For API calls, return JSON
+            if (window.location.pathname.includes('/api/')) {
+                document.body.innerHTML = '<pre>' + JSON.stringify(response, null, 2) + '</pre>';
+                document.body.style.fontFamily = 'monospace';
+                document.body.style.margin = '0';
+                document.body.style.padding = '10px';
+            }
+        });
+    </script>
+</head>
+<body>
+    {"message": "Not authenticated"}
+</body>
+</html>
