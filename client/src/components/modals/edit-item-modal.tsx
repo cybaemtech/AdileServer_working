@@ -51,6 +51,11 @@ const workItemFormSchema = z.object({
   currentBehavior: z.string().optional(),
   expectedBehavior: z.string().optional(),
   referenceUrl: z.string().optional(),
+  // New fields for EPIC and FEATURE
+  githubUrl: z.string().optional(),
+  prototypeLink: z.string().optional(),
+  mockupLink: z.string().optional(),
+  prototypeStatus: z.string().optional(),
 }).refine((data) => {
   // Description is required for STORY and BUG types
   if (['STORY', 'BUG'].includes(data.type)) {
@@ -216,6 +221,11 @@ export function EditItemModal({
       currentBehavior: "",
       expectedBehavior: "",
       referenceUrl: "",
+      // New fields for EPIC and FEATURE
+      githubUrl: "",
+      prototypeLink: "",
+      mockupLink: "",
+      prototypeStatus: "",
     },
   });
 
@@ -375,6 +385,11 @@ export function EditItemModal({
         currentBehavior: currentBehaviorValue,
         expectedBehavior: expectedBehaviorValue,
         referenceUrl: displayWorkItem.referenceUrl ?? "",
+        // New fields for EPIC and FEATURE
+        githubUrl: displayWorkItem.githubUrl ?? "",
+        prototypeLink: displayWorkItem.prototypeLink ?? "",
+        mockupLink: displayWorkItem.mockupLink ?? "",
+        prototypeStatus: displayWorkItem.prototypeStatus ?? "",
       };
 
       console.log("🔍 WorkItem from API:", displayWorkItem);
@@ -432,6 +447,11 @@ export function EditItemModal({
         currentBehavior: data.currentBehavior || null,
         expectedBehavior: data.expectedBehavior || null,
         referenceUrl: data.referenceUrl || null,
+        // New fields for EPIC and FEATURE
+        githubUrl: data.githubUrl || null,
+        prototypeLink: data.prototypeLink || null,
+        mockupLink: data.mockupLink || null,
+        prototypeStatus: data.prototypeStatus || null,
       };
 
       console.log("Final submitData:", submitData);
@@ -1250,6 +1270,108 @@ export function EditItemModal({
                     <FormControl>
                       <Input {...field} placeholder="https://..." />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* GitHub URL field - only for EPICs */}
+            {workItem?.type === "EPIC" && (
+              <FormField
+                control={form.control}
+                name="githubUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>GitHub Repository URL (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="https://github.com/owner/repository" 
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Link to the GitHub repository for this EPIC. This will be used for source code tracking and integration.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Prototype Link field - only for FEATUREs */}
+            {workItem?.type === "FEATURE" && (
+              <FormField
+                control={form.control}
+                name="prototypeLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prototype Link (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="https://figma.com/prototype/..." 
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Link to a design prototype, wireframe, or mockup for this client requirement.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Mockup Link field - for both EPIC and FEATURE */}
+            {(workItem?.type === "EPIC" || workItem?.type === "FEATURE") && (
+              <FormField
+                control={form.control}
+                name="mockupLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Design Mockups Link (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="https://figma.com/file/..." 
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Link to design mockups, wireframes, or UI specifications.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Prototype Status field - for both EPIC and FEATURE */}
+            {(workItem?.type === "EPIC" || workItem?.type === "FEATURE") && (
+              <FormField
+                control={form.control}
+                name="prototypeStatus"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prototype Status</FormLabel>
+                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select prototype status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="not_started">Not Started</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Current status of the prototype development.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

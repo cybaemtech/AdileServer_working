@@ -1,0 +1,439 @@
+{
+    "EPIC": {
+        "basic_fields": {
+            "title": {
+                "type": "text",
+                "required": true,
+                "label": "Epic Title"
+            },
+            "description": {
+                "type": "textarea",
+                "required": true,
+                "label": "Epic Description"
+            },
+            "status": {
+                "type": "select",
+                "options": [
+                    "TODO",
+                    "IN_PROGRESS",
+                    "DONE",
+                    "ON_HOLD"
+                ],
+                "label": "Status"
+            },
+            "priority": {
+                "type": "select",
+                "options": [
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH",
+                    "CRITICAL"
+                ],
+                "label": "Priority"
+            }
+        },
+        "epic_specific": {
+            "business_value": {
+                "type": "textarea",
+                "label": "Business Value"
+            },
+            "epic_color": {
+                "type": "color",
+                "label": "Epic Color"
+            },
+            "start_date": {
+                "type": "date",
+                "label": "Start Date"
+            },
+            "end_date": {
+                "type": "date",
+                "label": "End Date"
+            }
+        },
+        "prototype_design": {
+            "prototype_link": {
+                "type": "url",
+                "label": "Prototype Link"
+            },
+            "prototype_status": {
+                "type": "select",
+                "options": [
+                    "not_started",
+                    "in_progress",
+                    "completed",
+                    "approved"
+                ],
+                "label": "Prototype Status"
+            },
+            "mockup_link": {
+                "type": "url",
+                "label": "Design Mockups Link"
+            },
+            "drag_drop_enabled": {
+                "type": "checkbox",
+                "label": "Enable Drag & Drop"
+            }
+        },
+        "file_uploads": {
+            "pdf_upload": {
+                "type": "file",
+                "accept": ".pdf",
+                "label": "Upload Requirements PDF"
+            },
+            "screenshot_upload": {
+                "type": "file",
+                "accept": "image\/*",
+                "label": "Upload Screenshot"
+            }
+        },
+        "tracking": {
+            "assignee_id": {
+                "type": "user_select",
+                "label": "Assignee"
+            },
+            "tags": {
+                "type": "tags",
+                "label": "Tags"
+            },
+            "dependencies": {
+                "type": "json",
+                "label": "Dependencies"
+            }
+        }
+    },
+    "FEATURE": {
+        "basic_fields": {
+            "title": {
+                "type": "text",
+                "required": true,
+                "label": "Feature Title"
+            },
+            "description": {
+                "type": "textarea",
+                "required": true,
+                "label": "Feature Description"
+            },
+            "status": {
+                "type": "select",
+                "options": [
+                    "TODO",
+                    "IN_PROGRESS",
+                    "DONE",
+                    "ON_HOLD"
+                ],
+                "label": "Status"
+            },
+            "priority": {
+                "type": "select",
+                "options": [
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH",
+                    "CRITICAL"
+                ],
+                "label": "Priority"
+            },
+            "parent_id": {
+                "type": "epic_select",
+                "label": "Parent Epic"
+            }
+        },
+        "feature_specific": {
+            "business_value": {
+                "type": "textarea",
+                "label": "Business Value"
+            },
+            "acceptance_criteria": {
+                "type": "textarea",
+                "label": "Acceptance Criteria"
+            },
+            "estimate": {
+                "type": "number",
+                "step": "0.5",
+                "label": "Estimate (hours)"
+            }
+        },
+        "prototype_design": {
+            "prototype_link": {
+                "type": "url",
+                "label": "Prototype Link"
+            },
+            "prototype_status": {
+                "type": "select",
+                "options": [
+                    "not_started",
+                    "in_progress",
+                    "completed",
+                    "approved"
+                ],
+                "label": "Prototype Status"
+            },
+            "mockup_link": {
+                "type": "url",
+                "label": "Design Mockups Link"
+            },
+            "drag_drop_enabled": {
+                "type": "checkbox",
+                "label": "Enable Drag & Drop"
+            }
+        },
+        "file_uploads": {
+            "pdf_upload": {
+                "type": "file",
+                "accept": ".pdf",
+                "label": "Upload Specifications PDF"
+            },
+            "screenshot_upload": {
+                "type": "file",
+                "accept": "image\/*",
+                "label": "Upload Screenshot"
+            }
+        },
+        "tracking": {
+            "assignee_id": {
+                "type": "user_select",
+                "label": "Assignee"
+            },
+            "tags": {
+                "type": "tags",
+                "label": "Tags"
+            },
+            "dependencies": {
+                "type": "json",
+                "label": "Dependencies"
+            }
+        }
+    },
+    "STORY": {
+        "basic_fields": {
+            "title": {
+                "type": "text",
+                "required": true,
+                "label": "Story Title"
+            },
+            "description": {
+                "type": "textarea",
+                "required": true,
+                "label": "Story Description"
+            },
+            "status": {
+                "type": "select",
+                "options": [
+                    "TODO",
+                    "IN_PROGRESS",
+                    "DONE",
+                    "ON_HOLD"
+                ],
+                "label": "Status"
+            },
+            "priority": {
+                "type": "select",
+                "options": [
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH",
+                    "CRITICAL"
+                ],
+                "label": "Priority"
+            },
+            "parent_id": {
+                "type": "feature_select",
+                "label": "Parent Feature"
+            }
+        },
+        "story_specific": {
+            "acceptance_criteria": {
+                "type": "textarea",
+                "label": "Acceptance Criteria"
+            },
+            "story_points": {
+                "type": "select",
+                "options": [
+                    "1",
+                    "2",
+                    "3",
+                    "5",
+                    "8",
+                    "13",
+                    "21"
+                ],
+                "label": "Story Points"
+            },
+            "estimate": {
+                "type": "number",
+                "step": "0.5",
+                "label": "Estimate (hours)"
+            }
+        },
+        "tracking": {
+            "assignee_id": {
+                "type": "user_select",
+                "label": "Assignee"
+            },
+            "tags": {
+                "type": "tags",
+                "label": "Tags"
+            },
+            "screenshot_upload": {
+                "type": "file",
+                "accept": "image\/*",
+                "label": "Upload Screenshot"
+            }
+        }
+    },
+    "TASK": {
+        "basic_fields": {
+            "title": {
+                "type": "text",
+                "required": true,
+                "label": "Task Title"
+            },
+            "description": {
+                "type": "textarea",
+                "required": true,
+                "label": "Task Description"
+            },
+            "status": {
+                "type": "select",
+                "options": [
+                    "TODO",
+                    "IN_PROGRESS",
+                    "DONE",
+                    "ON_HOLD"
+                ],
+                "label": "Status"
+            },
+            "priority": {
+                "type": "select",
+                "options": [
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH",
+                    "CRITICAL"
+                ],
+                "label": "Priority"
+            },
+            "parent_id": {
+                "type": "story_select",
+                "label": "Parent Story"
+            }
+        },
+        "task_specific": {
+            "estimated_hours": {
+                "type": "number",
+                "step": "0.5",
+                "label": "Estimated Hours"
+            },
+            "actual_hours": {
+                "type": "number",
+                "step": "0.5",
+                "label": "Actual Hours"
+            }
+        },
+        "tracking": {
+            "assignee_id": {
+                "type": "user_select",
+                "required": true,
+                "label": "Assignee"
+            },
+            "tags": {
+                "type": "tags",
+                "label": "Tags"
+            }
+        }
+    },
+    "BUG": {
+        "basic_fields": {
+            "title": {
+                "type": "text",
+                "required": true,
+                "label": "Bug Title"
+            },
+            "description": {
+                "type": "textarea",
+                "required": true,
+                "label": "Bug Description"
+            },
+            "status": {
+                "type": "select",
+                "options": [
+                    "TODO",
+                    "IN_PROGRESS",
+                    "DONE",
+                    "ON_HOLD"
+                ],
+                "label": "Status"
+            },
+            "priority": {
+                "type": "select",
+                "options": [
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH",
+                    "CRITICAL"
+                ],
+                "label": "Priority"
+            }
+        },
+        "bug_specific": {
+            "bug_type": {
+                "type": "select",
+                "options": [
+                    "functional",
+                    "ui",
+                    "performance",
+                    "security"
+                ],
+                "label": "Bug Type"
+            },
+            "severity": {
+                "type": "select",
+                "options": [
+                    "low",
+                    "medium",
+                    "high",
+                    "critical"
+                ],
+                "label": "Severity"
+            },
+            "current_behavior": {
+                "type": "textarea",
+                "label": "Current Behavior"
+            },
+            "expected_behavior": {
+                "type": "textarea",
+                "label": "Expected Behavior"
+            },
+            "reproduction_steps": {
+                "type": "textarea",
+                "label": "Steps to Reproduce"
+            },
+            "environment": {
+                "type": "select",
+                "options": [
+                    "development",
+                    "testing",
+                    "staging",
+                    "production"
+                ],
+                "label": "Environment"
+            }
+        },
+        "tracking": {
+            "reporter_id": {
+                "type": "user_select",
+                "required": true,
+                "label": "Reporter"
+            },
+            "assignee_id": {
+                "type": "user_select",
+                "label": "Assignee"
+            },
+            "screenshot_upload": {
+                "type": "file",
+                "accept": "image\/*",
+                "label": "Upload Screenshot"
+            }
+        }
+    }
+}

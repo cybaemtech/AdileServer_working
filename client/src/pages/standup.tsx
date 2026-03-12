@@ -168,7 +168,7 @@ export default function DailyStandup() {
                 <MultiSelect
                   value={standupProjectFilter}
                   onChange={setStandupProjectFilter}
-                  options={filteredProjects.map(p => ({ value: p.id.toString(), label: `[${p.key}] ${p.name}` }))}
+                  options={filteredProjects.map(p => ({ value: p.id.toString(), label: `${p.name} [${p.key}]` }))}
                   placeholder="All Projects"
                   maxDisplay={1}
                 />

@@ -202,6 +202,14 @@ var workItems = pgTable("work_items", {
   screenshotPath: varchar("screenshot_path", { length: 500 }),
   screenshot: text("screenshot"),
   screenshotBlob: text("screenshot_blob"),
+  // EPIC and FEATURE specific fields
+  githubUrl: varchar("github_url", { length: 255 }),
+  prototypeLink: varchar("prototype_link", { length: 500 }),
+  mockupLink: varchar("mockup_link", { length: 500 }),
+  prototypeStatus: varchar("prototype_status", { length: 50 }),
+  pdfUploadPath: varchar("pdf_upload_path", { length: 500 }),
+  pdfUploadBlob: text("pdf_upload_blob"),
+  dragDropEnabled: boolean("drag_drop_enabled"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 }, (table) => {

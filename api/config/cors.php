@@ -10,7 +10,11 @@ function setCorsHeaders() {
         'http://127.0.0.1:5000',
         'http://127.0.0.1:4173',  // Vite preview port
         'https://cybaemtech.in',
-        'https://www.cybaemtech.in'
+        'https://www.cybaemtech.in',
+        'https://agile.cybaemtech.app:90',
+        'https://agile.cybaemtech.app',
+        'http://agile.cybaemtech.app:90',
+        'http://agile.cybaemtech.app'
     ];
 
     // Get the origin from the request

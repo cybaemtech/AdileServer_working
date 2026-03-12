@@ -27,7 +27,23 @@ import { apiGet } from "@/lib/api-config";
 import { useToast } from "@/hooks/use-toast";
 import { TagsInput } from "@/components/ui/tags-input";
 
-// Create a schema specifically for the form
+// Function to get user-friendly display names for work item types
+const getTypeDisplayName = (type: string): string => {
+  switch (type) {
+    case 'EPIC':
+      return 'Client Details';
+    case 'FEATURE':
+      return 'Client Requirement';
+    case 'STORY':
+      return 'Change Request';
+    case 'TASK':
+      return 'Task';
+    case 'BUG':
+      return 'Bug';
+    default:
+      return type.charAt(0) + type.slice(1).toLowerCase();
+  }
+};
 const workItemFormSchema = z.object({
   title: z.string()
     .min(3, { message: "Title must be at least 3 characters" })
@@ -54,14 +70,17 @@ const workItemFormSchema = z.object({
   referenceUrl: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
   severity: z.string().optional(),
   screenshotFile: z.instanceof(File).optional().nullable(),
+  // FEATURE-specific fields (Client Requirement)
+  prototypeLink: z.string().url({ message: "Please enter a valid prototype URL" }).optional().or(z.literal("")),
+  attachmentFile: z.instanceof(File).optional().nullable(),
 }).refine((data) => {
-  // Description is required for STORY and BUG types
+  // Description is required for STORY and BUG types (Change Requests and Bugs)
   if (['STORY', 'BUG'].includes(data.type)) {
     return data.description && data.description.trim().length > 0;
   }
   return true;
 }, {
-  message: "Description is required for Stories and Bugs",
+  message: "Description is required for Change Requests and Bugs",
   path: ["description"],
 }).refine((data) => {
   // Actual hours is required when status is DONE
@@ -79,7 +98,7 @@ const workItemFormSchema = z.object({
   message: "Estimate is required",
   path: ["estimate"],
 }).refine((data) => {
-  // Parent/Story is required for TASK, BUG, FEATURE (not EPIC)
+  // Parent is required for TASK, BUG, FEATURE (not EPIC - Client Details)
   if (!['EPIC'].includes(data.type)) {
     return data.parentId && data.parentId > 0;
   }
@@ -137,6 +156,7 @@ export function CreateItemModal({
   const [selectedType, setSelectedType] = useState<string>("TASK");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedAttachmentFile, setSelectedAttachmentFile] = useState<File | null>(null);
   // Track selected project for dynamic assignee list
   const [selectedProjectId, setSelectedProjectId] = useState<number>(currentProject?.id || (projects.length > 0 ? projects[0].id : 0));
 
@@ -202,6 +222,8 @@ export function CreateItemModal({
       expectedBehavior: "",
       referenceUrl: "",
       severity: "LOW",
+      prototypeLink: "",
+      attachmentFile: null,
     },
   });
   
@@ -270,8 +292,13 @@ export function CreateItemModal({
         estimate: "",
         startDate: null,
         endDate: null,
+        githubUrl: "",
+        prototypeLink: "",
+        attachmentFile: null,
       });
       setSelectedType(defaultType);
+      setSelectedFile(null);
+      setSelectedAttachmentFile(null);
       setIsInitialized(false); // Reset initialization flag when modal closes
     }
   }, [isOpen, form, defaultType, selectedProjectId]);
@@ -339,8 +366,8 @@ export function CreateItemModal({
       // Validation: Features must have an Epic parent
       if (data.type === 'FEATURE' && (!data.parentId)) {
         toast({
-          title: "Epic Required",
-          description: "Features must be created under an Epic. Please select a parent Epic first.",
+          title: "Client Details Required",
+          description: "Client Requirements must be created under Client Details. Please select a parent Client Details first.",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -350,8 +377,8 @@ export function CreateItemModal({
       // Validation: Stories must have a Feature parent
       if (data.type === 'STORY' && (!data.parentId)) {
         toast({
-          title: "Feature Required",
-          description: "Stories must be created under a Feature. Please select a parent Feature first.",
+          title: "Client Requirement Required",
+          description: "Change Requests must be created under a Client Requirement. Please select a parent Client Requirement first.",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -361,15 +388,15 @@ export function CreateItemModal({
       // Validation: Task and Bug must have a Story parent (REQUIRED)
       if (['TASK', 'BUG'].includes(data.type) && !data.parentId) {
         toast({
-          title: "Story Required",
-          description: `${data.type.charAt(0) + data.type.slice(1).toLowerCase()}s must be created under a Story. Please select a parent Story first.`,
+          title: "Change Request Required",
+          description: `${getTypeDisplayName(data.type)}s must be created under a Change Request. Please select a parent Change Request first.`,
           variant: "destructive",
         });
         setIsSubmitting(false);
         return;
       }
 
-      // Validation: Story and Bug must have description (Task is optional)
+      // Validation: Change Requests and Bugs must have description (Task is optional)
       if (['STORY', 'BUG'].includes(data.type) && (!data.description || data.description.trim() === '')) {
         toast({
           title: "Description Required",
@@ -397,6 +424,8 @@ export function CreateItemModal({
         startDate: data.startDate || null,
         endDate: data.endDate || null,
         githubUrl: data.githubUrl?.trim() || null,
+        // FEATURE-specific fields (Client Requirements)
+        prototypeLink: data.type === 'FEATURE' ? data.prototypeLink?.trim() || null : null,
         // Bug-specific fields
         bugType: data.type === 'BUG' ? data.bugType : null,
         currentBehavior: data.type === 'BUG' ? (data.currentBehavior?.trim() || null) : null,
@@ -424,6 +453,31 @@ export function CreateItemModal({
           toast({
             title: "Warning",
             description: "Could not process screenshot, continuing without it.",
+            variant: "default",
+          });
+        }
+      }
+
+      // Convert attachment to base64 if provided for FEATURE or STORY
+      if (selectedAttachmentFile && ['FEATURE', 'STORY'].includes(data.type)) {
+        try {
+          const base64String = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(selectedAttachmentFile);
+          });
+          // Store attachment in binary using the existing screenshot_blob field 
+          // (database can be extended later with dedicated attachment fields)
+          submitData.screenshot_blob = base64String;
+          // Store path for reference
+          const timestamp = new Date().getTime();
+          submitData.attachment_path = `attachment_${timestamp}_${selectedAttachmentFile.name}`;
+        } catch (error) {
+          console.error("Error converting attachment:", error);
+          toast({
+            title: "Warning",
+            description: "Could not process attachment, continuing without it.",
             variant: "default",
           });
         }
@@ -495,16 +549,16 @@ export function CreateItemModal({
 
   // Get estimate label based on selected type
   const getEstimateLabel = () => {
-    return selectedType === "STORY" ? "Story Points" : "Estimated Hours";
+    return selectedType === "STORY" ? "Requirement Points" : "Estimated Hours";
   };
 
   // Get valid parent label based on selected type
   const getParentLabel = () => {
     switch (selectedType) {
-      case "FEATURE": return "Epic";
-      case "STORY": return "Feature";
+      case "FEATURE": return "Client Details"; // Feature requires Epic parent
+      case "STORY": return "Client Requirement"; // Change Request requires Feature parent  
       case "TASK":
-      case "BUG": return "Story";
+      case "BUG": return "Change Request"; // Task/Bug requires Story (Change Request) parent
       default: return "Parent";
     }
   };
@@ -540,7 +594,7 @@ export function CreateItemModal({
                       handleTypeChange(type);
                     }}
                   >
-                    {type.charAt(0) + type.slice(1).toLowerCase()}
+                    {getTypeDisplayName(type)}
                   </Button>
                 ))}
               </div>
@@ -926,12 +980,12 @@ export function CreateItemModal({
                     </FormLabel>
                     {selectedType === "FEATURE" && (
                       <FormDescription>
-                        Features must be created under an Epic. Please select a parent Epic.
+                        Client Requirements must be created under Client Details. Please select a parent Client Details.
                       </FormDescription>
                     )}
                     {['TASK', 'BUG'].includes(selectedType) && (
                       <FormDescription>
-                        {selectedType.charAt(0) + selectedType.slice(1).toLowerCase()}s must be created under a Story. Please select a parent Story.
+                        {getTypeDisplayName(selectedType)}s must be created under a Change Request. Please select a parent Change Request.
                       </FormDescription>
                     )}
                     <FormControl>
@@ -1093,6 +1147,200 @@ export function CreateItemModal({
                   </FormItem>
                 )}
               />
+            )}
+
+            {/* Prototype Link field - only for FEATUREs (Client Requirements) */}
+            {selectedType === "FEATURE" && (
+              <FormField
+                control={form.control}
+                name="prototypeLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prototype Link (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="https://figma.com/prototype/..." 
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Link to a design prototype, wireframe, or mockup for this client requirement.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* PDF Upload for FEATUREs (Client Requirements) */}
+            {selectedType === "FEATURE" && (
+              <FormItem>
+                <FormLabel>PDF Upload (Optional)</FormLabel>
+                <FormControl>
+                  <div className="border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg p-6 text-center hover:border-neutral-400 transition-colors cursor-pointer"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add('border-primary');
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.classList.remove('border-primary');
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove('border-primary');
+                      const files = e.dataTransfer.files;
+                      if (files.length > 0) {
+                        const file = files[0];
+                        if (file.type === 'application/pdf') {
+                          setSelectedAttachmentFile(file);
+                        } else {
+                          toast({
+                            title: "Invalid file type",
+                            description: "Please upload a PDF file",
+                            variant: "destructive",
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setSelectedAttachmentFile(e.target.files[0]);
+                        }
+                      }}
+                      className="hidden"
+                      id="pdf-input-feature"
+                    />
+                    <label htmlFor="pdf-input-feature" className="cursor-pointer">
+                      <div className="text-neutral-600 dark:text-neutral-400">
+                        {selectedAttachmentFile ? (
+                          <div className="relative group">
+                            <p className="font-medium text-green-600">{selectedAttachmentFile.name}</p>
+                            <p className="text-sm">Click or drag to change</p>
+                            <div className="mt-2 p-2 bg-red-50 rounded border">
+                              <svg className="w-8 h-8 mx-auto text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSelectedAttachmentFile(null);
+                              }}
+                            >
+                              <span className="sr-only">Remove</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </Button>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="font-medium">Drag and drop your PDF document</p>
+                            <p className="text-sm">or click to select a PDF file</p>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  Upload a PDF document related to this client requirement (requirements document, specifications, etc.)
+                </FormDescription>
+              </FormItem>
+            )}
+
+            {/* File Attachment for STORYs (replace change request) */}
+            {selectedType === "STORY" && (
+              <FormItem>
+                <FormLabel>Attachment (Optional)</FormLabel>
+                <FormControl>
+                  <div className="border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg p-6 text-center hover:border-neutral-400 transition-colors cursor-pointer"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add('border-primary');
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.classList.remove('border-primary');
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove('border-primary');
+                      const files = e.dataTransfer.files;
+                      if (files.length > 0) {
+                        const file = files[0];
+                        // Allow common file types: PDF, images, docs
+                        const allowedTypes = ['application/pdf', 'image/', 'application/msword', 'application/vnd.openxmlformats-officedocument', 'text/'];
+                        if (allowedTypes.some(type => file.type.startsWith(type))) {
+                          setSelectedAttachmentFile(file);
+                        } else {
+                          toast({
+                            title: "Invalid file type",
+                            description: "Please upload a PDF, image, document, or text file",
+                            variant: "destructive",
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*,.doc,.docx,.txt"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setSelectedAttachmentFile(e.target.files[0]);
+                        }
+                      }}
+                      className="hidden"
+                      id="attachment-input-story"
+                    />
+                    <label htmlFor="attachment-input-story" className="cursor-pointer">
+                      <div className="text-neutral-600 dark:text-neutral-400">
+                        {selectedAttachmentFile ? (
+                          <div className="relative group">
+                            <p className="font-medium text-green-600">{selectedAttachmentFile.name}</p>
+                            <p className="text-sm">Click or drag to change</p>
+                            <div className="mt-2 p-2 bg-gray-50 rounded border">
+                              <svg className="w-8 h-8 mx-auto text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSelectedAttachmentFile(null);
+                              }}
+                            >
+                              <span className="sr-only">Remove</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </Button>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="font-medium">Drag and drop an attachment</p>
+                            <p className="text-sm">or click to select a file (PDF, image, document)</p>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  Attach any supporting documents, images, or files related to this change request.
+                </FormDescription>
+              </FormItem>
             )}
 
             {(selectedType === "EPIC" || selectedType === "FEATURE" || selectedType === "STORY") && (

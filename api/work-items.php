@@ -699,9 +699,14 @@ function createWorkItem($conn) {
         $reporterId = isset($input['reporterId']) && $input['reporterId'] > 0 ? (int)$input['reporterId'] : $_SESSION['user_id'];
         $estimate = isset($input['estimate']) && $input['estimate'] !== null && $input['estimate'] !== '' ? (float)$input['estimate'] : null;
         $githubUrl = isset($input['githubUrl']) ? trim($input['githubUrl']) : null;
+        $prototypeLink = isset($input['prototypeLink']) ? trim($input['prototypeLink']) : null;
         $bugType = array_key_exists('bugType', $input) ? trim((string)$input['bugType']) : null;
         $severity = array_key_exists('severity', $input) ? trim((string)$input['severity']) : null;
         $referenceUrl = array_key_exists('referenceUrl', $input) ? trim((string)$input['referenceUrl']) : null;
+        // For FEATURE type, use prototypeLink in referenceUrl field if provided
+        if ($type === 'FEATURE' && $prototypeLink) {
+            $referenceUrl = $prototypeLink;
+        }
         $screenshot = array_key_exists('screenshot', $input) ? trim((string)$input['screenshot']) : null;
         $estimatedHours = array_key_exists('estimatedHours', $input) ? (float)$input['estimatedHours'] : null;
         $actualHours = array_key_exists('actualHours', $input) ? (float)$input['actualHours'] : null;
